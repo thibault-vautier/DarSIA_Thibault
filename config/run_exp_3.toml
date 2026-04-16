@@ -1,0 +1,50 @@
+[id]
+run_id = "Run 3"
+
+# Data management
+[data]
+folder = "\\\\klient.uib.no\\FELLES\\LAB-IT\\IFT\\resfys\\FluidFlower\\FF2 25-26 masterdata fra 101\\Subset_20min_4h\\Experiment_3_subset_20min_4h"
+baseline = "DSC22892.JPG"
+results = "E:\\fluidflower_glass_beads\\run_exp_3\\results"
+
+# Selection of basline images
+[data.path.baseline]
+paths = ["DSC22892.JPG", "DSC22888.JPG", "DSC22887.JPG"]
+
+# Experimental metadata
+[protocols]
+injection = ["./data_example/protocol_exp_3.xlsx", "injection"]
+imaging = ["./data_example/protocol_exp_3.xlsx", "imaging"]
+pressure_temperature = [
+    "./data_example/protocol_exp_3.xlsx",
+    "pressure_temperature",
+]
+
+# Calibration of color paths
+[color_paths]
+mode = "manual"
+calibration_scope = "single_label"
+target_labels = [6]
+ignore_labels = [1, 2]       # water and top layer
+reference_label = 5          # black - yellow transition.
+data = ["calibration"]
+baseline = "baseline"
+rois = ["down"] #"calibration1", "calibration2"]
+ignore_baseline_spectrum = "baseline"
+histogram_weighting = "threshold"
+resolution = 51
+num_segments = 3
+threshold_baseline = 0.0
+threshold_calibration = 0.0 # 1e-4 # Needs tuning (1e-5 too low).
+
+
+# Calibration of color signal to mass
+[color_to_mass]
+data = ["phase5"]
+
+# Denoising using a simple averaging filter.
+[restoration]
+method = "volume_average"
+[restoration.options]
+rev_size = 0.01 # meters
+

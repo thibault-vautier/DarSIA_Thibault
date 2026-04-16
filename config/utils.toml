@@ -1,0 +1,32 @@
+
+# For download of raw images to local filesystem
+#[download]
+#source = "\\\\klient.uib.no\\FELLES\\LAB-IT\\IFT\\resfys\\FluidFlower\\FF2 24-25 glass beads\\050825_glass_beads_1_150_s"
+
+[video]
+
+[video.source]
+folder = "fingers/tips/storage"                # relative to [data.results] when not absolute
+extensions = [".png"]
+recursive = false
+
+[video.output]
+formats = ["mp4"]
+fps = 2.0
+codec = "mp4v"
+quality = 95
+# resolution = [1280, 720] # optional [width, height]
+
+[video.overlay]
+show_elapsed_time = true
+elapsed_time_format = "Elapsed: {:.2f} h"
+show_note = true
+note = "Experiment #3 - Segmentation"
+font_scale = 2.5
+thickness = 2
+text_color = [255, 255, 255]
+position = [20, 20]
+box_enabled = true
+box_color = [0, 0, 0]
+box_alpha = 0.4
+box_padding = 10

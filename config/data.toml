@@ -1,0 +1,95 @@
+# ROIs
+[roi.full]
+name = "Full Domain"
+corner_1 = [0.0, 0.0]
+corner_2 = [2.745, 1.5]
+
+[roi.box1]
+name = "Box 1"
+corner_1 = [0.0, 0.0]
+corner_2 = [1.45, 1.5]
+
+[roi.box2]
+name = "Box 2"
+corner_1 = [1.45, 0.0]
+corner_2 = [2.745, 1.5]
+
+[roi.top]
+name = "Close to Gas-Liquid Interface"
+corner_1 = [0.0, 1.05]
+corner_2 = [2.745, 0.95]
+
+[roi.storage]
+name = "Storage Region"
+corner_1 = [0.0, 1.05]
+corner_2 = [2.745, 0.0]
+
+[roi.calibration1]
+name = "calibration 1"
+corner_1 = [0.0, 0.8]
+corner_2 = [2.8, 1.2]
+
+[roi.calibration2]
+name = "calibration 2"
+corner_1 = [0.4, 0.0]
+corner_2 = [0.9, 1.2]
+
+[roi.down]
+name = "down"
+corner_1 = [0.0, 0.0]
+corner_2 = [1.4, 0.6]
+
+# Data
+[data.interval.phase1]
+start = "00:15:00"
+end = "00:15:00"
+num = 1
+tol = "00:10:00"
+
+[data.interval.phase2]
+start = "01:00:00"
+end = "05:00:00"
+num = 5
+tol = "00:01:00"
+
+[data.interval.phase3]
+start = "06:00:00"
+end = "10:00:00"
+num = 5
+tol = "00:10:00"
+
+[data.interval.phase4]
+start = "20:00:00"
+end = "80:00:00"
+num = 4
+tol = "00:45:00"
+
+[data.interval.phase5]
+start = "100:00:00"
+end = "200:00:00"
+num = 2
+tol = "05:00:00"
+
+[data.time.calibration]
+times = [
+    "00:15:00",
+    "02:00:00",
+    "04:00:00",
+    "06:00:00",
+    "20:00:00",
+    "40:00:00",
+    "60:00:00",
+    "100:00:00",
+    "200:00:00",
+    "300:00:00",
+    "400:00:00",
+]
+
+[data.interval.phase6]
+start = "120:00:00"
+end = "200:00:00"
+num = 9
+tol = "00:15:00"
+
+[data.paths.all]
+paths = "*.JPG"
