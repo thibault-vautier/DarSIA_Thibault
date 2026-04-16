@@ -21,7 +21,7 @@ python gui.py
 5. Check out [utils.toml](config/utils.toml) for util functionalities
 
 ## Data files
-1. Check out [depth_measurements.csv] containing pointwise depth measurements
-2. Check out [segmented_DSC00160.png] containing the manually segmented baseline image
-3. Check out [facies.xlsx] for containing facies information
-4. Check out [protocol_exp_3.xlsx] for the protocols for Experiment 3.
+1. Check out [depth_measurements.csv](data/depth_measurements.csv) containing pointwise depth measurements
+2. Check out [segmented_DSC00160.png](data/segmented_DSC00160.png) containing the manually segmented baseline image
+3. Check out [facies.xlsx](data/facies.xlsx) for containing facies information
+4. Check out [protocol_exp_3.xlsx](data/protocol_exp_3.xlsx) for the protocols for Experiment 3.
