@@ -1,7 +1,27 @@
 
 # For download of raw images to local filesystem
-#[download]
-#source = "\\\\klient.uib.no\\FELLES\\LAB-IT\\IFT\\resfys\\FluidFlower\\FF2 24-25 glass beads\\050825_glass_beads_1_150_s"
+
+# For download of raw images to local filesystem
+[download]
+source = "\\\\klient.uib.no\\FELLES\\LAB-IT\\IFT\\resfys\\FluidFlower\\FF2 25-26 masterdata fra 101\\Subset_20min_4h\\Experiment_3_subset_20min_4h"
+
+[download.data.time.calibration]
+times = [
+    "00:15:00",
+    "02:00:00",
+    "04:00:00",
+    "06:00:00",
+    "20:00:00",
+    "40:00:00",
+    "60:00:00",
+    "100:00:00",
+    "200:00:00",
+    "300:00:00",
+    "400:00:00",
+]
+
+#[download.data.path.baseline]
+#paths = ["DSC22892.JPG", "DSC22888.JPG", "DSC22887.JPG"]
 
 [video]
 

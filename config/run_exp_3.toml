@@ -13,10 +13,10 @@ paths = ["DSC22892.JPG", "DSC22888.JPG", "DSC22887.JPG"]
 
 # Experimental metadata
 [protocols]
-injection = ["./data_example/protocol_exp_3.xlsx", "injection"]
-imaging = ["./data_example/protocol_exp_3.xlsx", "imaging"]
+injection = ["./data/protocol_exp_3.xlsx", "injection"]
+imaging = ["./data/protocol_exp_3.xlsx", "imaging"]
 pressure_temperature = [
-    "./data_example/protocol_exp_3.xlsx",
+    "./data/protocol_exp_3.xlsx",
     "pressure_temperature",
 ]
 
