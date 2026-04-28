@@ -8,15 +8,15 @@ height = 1.5  # height of the model in m
 
 # Depth measurements
 [depth]
-measurements = "./data_example/depth_measurements.csv"
+measurements = "./data/depth_measurements.csv"
 
 # Labels based on segmentation of the reference image (e.g., obtained from manual annotation or from a segmentation routine)
 [labeling]
-colored_image = "./data_example_simplified/segmented_DSC00160.png"
+colored_image = "./data/segmented_DSC00160.png"
 
 # Facies properties and mapping to labels in the segmented image
 [facies]
-props = "./data_example_simplified/facies.xlsx" # excel file with facies properties
+props = "./data/facies.xlsx" # excel file with facies properties
 
 
 # Active and inactive corrections
@@ -60,9 +60,9 @@ vertical_stretch = -0.0
 vertical_center_offset = 405
 
 # Custom corrections
-[corrections.illumination]
-labels = [6]
-num_samples = 30
+#[corrections.illumination]
+#labels = [6]
+#num_samples = 30
 
 # [corrections.color]
 # colorchecker = "upper_left"

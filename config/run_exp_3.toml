@@ -3,20 +3,20 @@ run_id = "Run 3"
 
 # Data management
 [data]
-folder = "\\\\klient.uib.no\\FELLES\\LAB-IT\\IFT\\resfys\\FluidFlower\\FF2 25-26 masterdata fra 101\\Subset_20min_4h\\Experiment_3_subset_20min_4h"
+folder = "C:/Users/thiba/OneDrive/Documents/Fluid_Flower/code_DarSIA_perso/raw_data"
 baseline = "DSC22892.JPG"
-results = "E:\\fluidflower_glass_beads\\run_exp_3\\results"
+results = "C:/Users/thiba/OneDrive/Documents/Fluid_Flower/code_DarSIA_perso/results"
 
-# Selection of basline images
+# Selection of baseline images
 [data.path.baseline]
-paths = ["DSC22892.JPG", "DSC22888.JPG", "DSC22887.JPG"]
+paths = ["DSC22892.JPG", "DSC22887.JPG"]
 
 # Experimental metadata
 [protocols]
-injection = ["./data_example/protocol_exp_3.xlsx", "injection"]
-imaging = ["./data_example/protocol_exp_3.xlsx", "imaging"]
+injection = ["./data/protocol_exp_3.xlsx", "injection"]
+imaging = ["./data/protocol_exp_3.xlsx", "imaging"]
 pressure_temperature = [
-    "./data_example/protocol_exp_3.xlsx",
+    "./data/protocol_exp_3.xlsx",
     "pressure_temperature",
 ]
 
