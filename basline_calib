@@ -1,0 +1,143 @@
+import cv2
+import numpy as np
+
+
+"./results/cropping/DSC22892.jpg"
+
+#clean image : h>1450
+
+def extract_color_values(image_path, nw=20):
+    img = cv2.imread(image_path)
+
+    h, w = img.shape[:2]
+    nh=int((h-1450)*nw/w)
+
+    r, g, b = [], [], []
+
+    dh=int((h-1450)/nh)  #1450 is the height of the start of the clean image
+    dw=int(w/nw)
+
+    for i in range (nh):
+        r.append([])
+        g.append([])
+        b.append([])
+        for j in range(nw):
+            r[i].append(int(img[1450+i*dh, j*dw][2]))
+            g[i].append(int(img[1450+i*dh, j*dw][1]))
+            b[i].append(int(img[1450+i*dh, j*dw][0]))
+
+    return r,g,b
+
+
+def average_color_values(r, g, b):
+    r_ = np.array(r)
+    g_ = np.array(g)
+    b_ = np.array(b)
+    r_mean = np.mean(r_)
+    g_mean = np.mean(g_)
+    b_mean = np.mean(b_)
+    return r_mean, g_mean, b_mean
+
+
+def diff_to_mean(r, g, b, r_m, g_m, b_m):
+    r_diff = np.array(r) - r_m
+    g_diff = np.array(g) - g_m
+    b_diff = np.array(b) - b_m
+    return r_diff, g_diff, b_diff
+
+
+def rebuild_image(image_path, image_calib, nw=20):
+    img = cv2.imread(image_path)
+    h, w = img.shape[:2]
+    nh=int((h-1450)*nw/w)
+
+    lh=set()
+    for i in range (nh):
+        lh.add(i*nh)
+    lw=set()
+    for j in range (nw):    
+        lw.add(j*nw)
+
+    img_rebuilt = np.zeros((h, w, 3), dtype=np.uint8)
+    #creating the main lines
+    for i in range (h):
+        for j in range (w):
+            if i in lh:
+                if j in lw:
+                    img_rebuilt[i,j] = image_calib[int(i/nh), int(j/nw)]
+                else : 
+                    c = (image_calib[int(i/nh), int(j//nw+1)]-image_calib[int(i/nh), int(j//nw)])/nw   # c = leading coefficient of the variation of color between the two calibration points
+                    img_rebuilt[i,j] = [int(c[0]*(j%nw)/nw), int(c[1]*(j%nw)/nw), int(c[2]*(j%nw)/nw)]
+    #filling with columns
+    for j in range (w):
+        for i in range (h-nh):
+            if i not in lh:
+                c = (img_rebuilt[int(i-i%nh+nh), j]-img_rebuilt[int(i-i%nh), j])/nh
+                img_rebuilt[i,j] = [int(c[0]*(i%nh)/nh), int(c[1]*(i%nh)/nh), int(c[2]*(i%nh)/nh)]
+    return img_rebuilt
+    
+
+
+def color_calibration(baseline_path, image_path, nw=20):
+    #baseline
+    r, g, b = extract_color_values(baseline_path, nw)
+    r_m, g_m, b_m = average_color_values(r, g, b)
+    r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
+
+    #image correction
+    r1, g1, b1 = extract_color_values(image_path, nw)
+    r1_new, g1_new, b1_new = r1-r_diff, g1-g_diff, b1-b_diff
+
+
+    img = cv2.imread(image_path)
+    h, w = img.shape[:2]
+    nh=int((h-1450)*nw/w)
+    image_calib = np.zeros((nh, nw, 3), dtype=np.uint8)
+    for i in range (nh):
+        for j in range(nw):
+            image_calib[i, j] = [b1_new[i][j], g1_new[i][j], r1_new[i][j]]
+    
+
+    img_rebuilt = rebuild_image(image_path, image_calib, nw)
+
+    cv2.imshow("rebuilt image", img_rebuilt)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    #cv2.imwrite("rebuilt image.png", img2)
+
+
+
+color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 500)
+
+
+
+
+"""
+for j in range (w):
+        for i in range (h):
+            if j in lw:
+                if i not in lh:
+                    c = (image_calib[int(i//nh+1), int(j/nw)]-image_calib[int(i//nh), int(j/nw)])/nh
+                    img_rebuilt[i,j] = [int(c[0]*(i%nh)/nh), int(c[1]*(i%nh)/nh), int(c[2]*(i%nh)/nh)]
+"""
+
+
+"""
+r, g, b = extract_color_values("./results/cropping/DSC22892.jpg", 50)
+r_m, g_m, b_m = average_color_values(r, g, b)
+r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
+"""
+
+"""
+img = cv2.imread("./results/cropping/DSC22892.jpg")
+h, w = img.shape[:2]
+img2 = np.zeros((h, w, 3), dtype=np.uint8)
+img2[:, :] = [b_m, g_m, r_m]
+
+cv2.imshow("image uniforme", img2)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+cv2.imwrite("uniform_color.png", img2)
+"""
+
+
