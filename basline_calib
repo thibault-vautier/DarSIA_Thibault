@@ -2,12 +2,14 @@ import cv2
 import numpy as np
 
 
-"./results/cropping/DSC22892.jpg"
+"../results/cropping/DSC22892.jpg"
 
 #clean image : h>1450
 
 def extract_color_values(image_path, nw=20):
     img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
 
     h, w = img.shape[:2]
     nh=int((h-1450)*nw/w)
@@ -48,34 +50,56 @@ def diff_to_mean(r, g, b, r_m, g_m, b_m):
 
 def rebuild_image(image_path, image_calib, nw=20):
     img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
+    
     h, w = img.shape[:2]
     nh=int((h-1450)*nw/w)
+   
+    dh=(h-1450)/nh  #1450 is the height of the start of the clean image
+    dw=w/nw
 
     lh=set()
     for i in range (nh):
-        lh.add(i*nh)
+        lh.add(int(i*dh))
     lw=set()
     for j in range (nw):    
-        lw.add(j*nw)
+        lw.add(int(j*dw))
 
-    img_rebuilt = np.zeros((h, w, 3), dtype=np.uint8)
+    img_rebuilt = np.zeros((h-1450, w, 3), dtype=np.uint8)
     #creating the main lines
-    for i in range (h):
+    for i in range (h-1450):
         for j in range (w):
             if i in lh:
                 if j in lw:
-                    img_rebuilt[i,j] = image_calib[int(i/nh), int(j/nw)]
+                    img_rebuilt[i,j] = image_calib[int(i/dh), int(j/dw)]
                 else : 
-                    c = (image_calib[int(i/nh), int(j//nw+1)]-image_calib[int(i/nh), int(j//nw)])/nw   # c = leading coefficient of the variation of color between the two calibration points
-                    img_rebuilt[i,j] = [int(c[0]*(j%nw)/nw), int(c[1]*(j%nw)/nw), int(c[2]*(j%nw)/nw)]
+                    j0 = min(int(j / dw), nw - 1)
+                    j1 = min(j0 + 1, nw - 1)
+
+                    start = image_calib[int(i/dh), j0].astype(np.float32)
+                    end   = image_calib[int(i/dh), j1].astype(np.float32)
+
+                    t = (j - j0 * dw) / dw
+
+                    val = start + t * (end - start)
+                    img_rebuilt[i, j] = np.clip(val, 0, 255).astype(np.uint8)
     #filling with columns
     for j in range (w):
-        for i in range (h-nh):
+        for i in range (h-nh-1450):
             if i not in lh:
-                c = (img_rebuilt[int(i-i%nh+nh), j]-img_rebuilt[int(i-i%nh), j])/nh
-                img_rebuilt[i,j] = [int(c[0]*(i%nh)/nh), int(c[1]*(i%nh)/nh), int(c[2]*(i%nh)/nh)]
+                i0 = int(i / dh) * int(dh)
+                i1 = min(i0 + int(dh), (h - 1450) - 1)
+
+                start = img_rebuilt[i0, j].astype(np.float32)
+                end   = img_rebuilt[i1, j].astype(np.float32)
+
+                t = (i % dh) / dh
+
+                val = start + t * (end - start)
+                img_rebuilt[i, j] = np.clip(val, 0, 255).astype(np.uint8)
     return img_rebuilt
-    
+
 
 
 def color_calibration(baseline_path, image_path, nw=20):
@@ -86,10 +110,16 @@ def color_calibration(baseline_path, image_path, nw=20):
 
     #image correction
     r1, g1, b1 = extract_color_values(image_path, nw)
+    r1 = np.array(r1)
+    g1 = np.array(g1)
+    b1 = np.array(b1)
     r1_new, g1_new, b1_new = r1-r_diff, g1-g_diff, b1-b_diff
 
 
     img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
+    
     h, w = img.shape[:2]
     nh=int((h-1450)*nw/w)
     image_calib = np.zeros((nh, nw, 3), dtype=np.uint8)
@@ -97,17 +127,36 @@ def color_calibration(baseline_path, image_path, nw=20):
         for j in range(nw):
             image_calib[i, j] = [b1_new[i][j], g1_new[i][j], r1_new[i][j]]
     
+    img_rebuilt = cv2.resize(image_calib, (w, h-1450), interpolation=cv2.INTER_LINEAR)
+    #img_rebuilt = rebuild_image(image_path, image_calib, nw)
 
-    img_rebuilt = rebuild_image(image_path, image_calib, nw)
-
-    cv2.imshow("rebuilt image", img_rebuilt)
+    cv2.imshow("calibrated image", img_rebuilt)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    #cv2.imwrite("rebuilt image.png", img2)
+    cv2.imwrite("calibrated image.png", img_rebuilt)
 
 
 
-color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 500)
+color_calibration("../results/cropping/DSC22892.jpg", "../results/cropping/DSC26646.jpg", 500)
+
+
+"""
+nw = 500
+r, g, b = extract_color_values("../results/cropping/DSC26646.jpg", nw)
+r_m, g_m, b_m = average_color_values(r, g, b)
+r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
+img = cv2.imread("../results/cropping/DSC26646.jpg")
+h, w = img.shape[:2]
+nh=int((h-1450)*nw/w)
+image_calib = np.zeros((nh, nw, 3), dtype=np.uint8)
+for i in range (nh):
+    for j in range(nw):
+        image_calib[i, j] = [b_diff[i][j], g_diff[i][j], r_diff[i][j]]
+cv2.imshow("diff to mean image", image_calib)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+cv2.imwrite("diff to mean image.png", image_calib)
+"""
 
 
 
@@ -140,4 +189,42 @@ cv2.destroyAllWindows()
 cv2.imwrite("uniform_color.png", img2)
 """
 
+"""
+def rebuild_image(image_path, image_calib, nw=20):
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
+    
+    h, w = img.shape[:2]
+    nh=int((h-1450)*nw/w)
+   
+    dh=int((h-1450)/nh)  #1450 is the height of the start of the clean image
+    dw=int(w/nw)
 
+    lh=set()
+    for i in range (nh):
+        lh.add(i*dh)
+    lw=set()
+    for j in range (nw):    
+        lw.add(j*dw)
+
+    img_rebuilt = np.zeros((h-1450, w, 3), dtype=np.uint8)
+    #creating the main lines
+    for i in range (h-1450):
+        for j in range (w):
+            if i in lh:
+                if j in lw:
+                    img_rebuilt[i,j] = image_calib[int(i/dh), int(j/dw)]
+                else : 
+                    j0 = min(int(j // dw), nw-1)
+                    j1 = min(j0 + 1, nw - 1)
+                    c = (image_calib[int(i/dh), j1]-image_calib[int(i/dh), j0])   # c = leading coefficient of the variation of color between the two calibration points
+                    img_rebuilt[i,j] = [image_calib[int(i/dh), j0][0]+int(c[0]*(j%dw)/dw), image_calib[int(i/dh), j0][1]+int(c[1]*(j%dw)/dw),image_calib[int(i/dh), j0][2]+int(c[2]*(j%dw)/dw)]
+    #filling with columns
+    for j in range (w):
+        for i in range (h-nh-1450):
+            if i not in lh:
+                c = (img_rebuilt[int(i-i%dh+dh), j]-img_rebuilt[int(i-i%dh), j])/dh
+                img_rebuilt[i,j] = [int(c[0]*(i%dh)/dh), int(c[1]*(i%dh)/dh), int(c[2]*(i%dh)/dh)]
+    return img_rebuilt
+"""
