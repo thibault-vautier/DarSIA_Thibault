@@ -48,6 +48,14 @@ def diff_to_mean(r, g, b, r_m, g_m, b_m):
     return r_diff, g_diff, b_diff
 
 
+def diff_to_mean_multiply(r, g, b, r_m, g_m, b_m):
+    r_diff = np.array(r)/r_m
+    g_diff = np.array(g)/g_m
+    b_diff = np.array(b)/b_m
+    return r_diff, g_diff, b_diff
+
+
+
 def rebuild_image(image_path, image_calib, nw=20):
     img = cv2.imread(image_path)
     if img is None:
@@ -106,14 +114,16 @@ def color_calibration(baseline_path, image_path, nw=20):
     #baseline
     r, g, b = extract_color_values(baseline_path, nw)
     r_m, g_m, b_m = average_color_values(r, g, b)
-    r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
+    #r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
+    r_diff, g_diff, b_diff = diff_to_mean_multiply(r, g, b, r_m, g_m, b_m)
 
     #image correction
     r1, g1, b1 = extract_color_values(image_path, nw)
     r1 = np.array(r1)
     g1 = np.array(g1)
     b1 = np.array(b1)
-    r1_new, g1_new, b1_new = r1-r_diff, g1-g_diff, b1-b_diff
+    #r1_new, g1_new, b1_new = r1-r_diff, g1-g_diff, b1-b_diff
+    r1_new, g1_new, b1_new = r1/r_diff, g1/g_diff, b1/b_diff
 
 
     img = cv2.imread(image_path)
@@ -137,7 +147,7 @@ def color_calibration(baseline_path, image_path, nw=20):
 
 
 
-color_calibration("../results/cropping/DSC22892.jpg", "../results/cropping/DSC26646.jpg", 500)
+color_calibration("../results/cropping/DSC22892.jpg", "../results/cropping/DSC26646.jpg", 1000)
 
 
 """
