@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 
-
-"../results/cropping/DSC22892.jpg"
-
 #clean image : h>1450
 
 def extract_color_values(image_path, nw=20):
@@ -30,6 +27,37 @@ def extract_color_values(image_path, nw=20):
 
     return r,g,b
 
+def extract_color_values_patches(image_path, nw=20):
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
+
+    h, w = img.shape[:2]
+    nh=int((h-1450)*nw/w)
+
+    r, g, b = [], [], []
+
+    dh=int((h-1450)/nh)  #1450 is the height of the start of the clean image
+    dw=int(w/nw)
+
+    for i in range (nh):
+        r.append([])
+        g.append([])
+        b.append([])
+        for j in range(nw):
+            y0 = max(1450 + int((i - 0.5) * dh), 0)
+            y1 = min(1450 + int((i + 0.5) * dh), h)
+            x0 = max(int((j - 0.5) * dw), 0)
+            x1 = min(int((j + 0.5) * dw), w)
+
+            roi = img[y0:y1, x0:x1]
+            mean_color = cv2.mean(roi)
+
+            r[i].append(int(mean_color[2]))
+            g[i].append(int(mean_color[1]))
+            b[i].append(int(mean_color[0]))
+
+    return r,g,b
 
 def average_color_values(r, g, b):
     r_ = np.array(r)
@@ -52,6 +80,10 @@ def diff_to_mean_multiply(r, g, b, r_m, g_m, b_m):
     r_diff = np.array(r)/r_m
     g_diff = np.array(g)/g_m
     b_diff = np.array(b)/b_m
+    epsilon = 1e-6
+    r_diff = np.where(r_diff == 0, epsilon, r_diff)
+    g_diff = np.where(g_diff == 0, epsilon, g_diff)
+    b_diff = np.where(b_diff == 0, epsilon, b_diff)
     return r_diff, g_diff, b_diff
 
 
@@ -113,6 +145,7 @@ def rebuild_image(image_path, image_calib, nw=20):
 def color_calibration(baseline_path, image_path, nw=20):
     #baseline
     r, g, b = extract_color_values(baseline_path, nw)
+    #r, g, b = extract_color_values_patches(baseline_path, nw)
     r_m, g_m, b_m = average_color_values(r, g, b)
     #r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
     r_diff, g_diff, b_diff = diff_to_mean_multiply(r, g, b, r_m, g_m, b_m)
@@ -124,6 +157,12 @@ def color_calibration(baseline_path, image_path, nw=20):
     b1 = np.array(b1)
     #r1_new, g1_new, b1_new = r1-r_diff, g1-g_diff, b1-b_diff
     r1_new, g1_new, b1_new = r1/r_diff, g1/g_diff, b1/b_diff
+    r1_new = np.nan_to_num(r1_new, nan=0, posinf=255, neginf=0)
+    g1_new = np.nan_to_num(g1_new, nan=0, posinf=255, neginf=0)
+    b1_new = np.nan_to_num(b1_new, nan=0, posinf=255, neginf=0)
+    r1_new = np.clip(r1_new, 0, 255)
+    g1_new = np.clip(g1_new, 0, 255)
+    b1_new = np.clip(b1_new, 0, 255)
 
 
     img = cv2.imread(image_path)
@@ -147,15 +186,21 @@ def color_calibration(baseline_path, image_path, nw=20):
 
 
 
-color_calibration("../results/cropping/DSC22892.jpg", "../results/cropping/DSC26646.jpg", 1000)
+color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC34806.jpg", 500)
+
+
+
+
+
+
 
 
 """
 nw = 500
-r, g, b = extract_color_values("../results/cropping/DSC26646.jpg", nw)
+r, g, b = extract_color_values("./results/cropping/DSC26646.jpg", nw)
 r_m, g_m, b_m = average_color_values(r, g, b)
 r_diff, g_diff, b_diff = diff_to_mean(r, g, b, r_m, g_m, b_m)
-img = cv2.imread("../results/cropping/DSC26646.jpg")
+img = cv2.imread("./results/cropping/DSC26646.jpg")
 h, w = img.shape[:2]
 nh=int((h-1450)*nw/w)
 image_calib = np.zeros((nh, nw, 3), dtype=np.uint8)
