@@ -3,18 +3,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #clean image : h>1450
+#blue image : h>1050
 
-def extract_color_values(image_path, nw=20):
+def extract_color_values(image_path, nw=20, limit=1450):
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Image introuvable : {image_path}")
 
     h, w = img.shape[:2]
-    nh=int((h-1450)*nw/w)
+    nh=int((h-limit)*nw/w)
 
     r, g, b = [], [], []
 
-    dh=int((h-1450)/nh)  #1450 is the height of the start of the clean image
+    dh=int((h-limit)/nh)  #limit is the height of the start of the clean image
     dw=int(w/nw)
 
     for i in range (nh):
@@ -22,23 +23,23 @@ def extract_color_values(image_path, nw=20):
         g.append([])
         b.append([])
         for j in range(nw):
-            r[i].append(int(img[1450+i*dh, j*dw][2]))
-            g[i].append(int(img[1450+i*dh, j*dw][1]))
-            b[i].append(int(img[1450+i*dh, j*dw][0]))
+            r[i].append(int(img[limit+i*dh, j*dw][2]))
+            g[i].append(int(img[limit+i*dh, j*dw][1]))
+            b[i].append(int(img[limit+i*dh, j*dw][0]))
 
     return r,g,b
 
-def extract_color_values_patches(image_path, nw=20):
+def extract_color_values_patches(image_path, nw=20, limit=1450):
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Image introuvable : {image_path}")
 
     h, w = img.shape[:2]
-    nh=int((h-1450)*nw/w)
+    nh=int((h-limit)*nw/w)
 
     r, g, b = [], [], []
 
-    dh=int((h-1450)/nh)  #1450 is the height of the start of the clean image
+    dh=int((h-limit)/nh)  #limit is the height of the start of the clean image
     dw=int(w/nw)
 
     for i in range (nh):
@@ -46,8 +47,8 @@ def extract_color_values_patches(image_path, nw=20):
         g.append([])
         b.append([])
         for j in range(nw):
-            y0 = max(1450 + int((i - 0.5) * dh), 0)
-            y1 = min(1450 + int((i + 0.5) * dh), h)
+            y0 = max(limit + int((i - 0.5) * dh), 0)
+            y1 = min(limit + int((i + 0.5) * dh), h)
             x0 = max(int((j - 0.5) * dw), 0)
             x1 = min(int((j + 0.5) * dw), w)
 
@@ -88,16 +89,15 @@ def diff_to_mean_multiply(r, g, b, r_m, g_m, b_m):
     return r_diff, g_diff, b_diff
 
 
-
-def rebuild_image(image_path, image_calib, nw=20):
+def rebuild_image(image_path, image_calib, nw=20, limit=1450):
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Image introuvable : {image_path}")
     
     h, w = img.shape[:2]
-    nh=int((h-1450)*nw/w)
+    nh=int((h-limit)*nw/w)
    
-    dh=(h-1450)/nh  #1450 is the height of the start of the clean image
+    dh=(h-limit)/nh  #limit is the height of the start of the clean image
     dw=w/nw
 
     lh=set()
@@ -107,9 +107,9 @@ def rebuild_image(image_path, image_calib, nw=20):
     for j in range (nw):    
         lw.add(int(j*dw))
 
-    img_rebuilt = np.zeros((h-1450, w, 3), dtype=np.uint8)
+    img_rebuilt = np.zeros((h-limit, w, 3), dtype=np.uint8)
     #creating the main lines
-    for i in range (h-1450):
+    for i in range (h-limit):
         for j in range (w):
             if i in lh:
                 if j in lw:
@@ -127,10 +127,10 @@ def rebuild_image(image_path, image_calib, nw=20):
                     img_rebuilt[i, j] = np.clip(val, 0, 255).astype(np.uint8)
     #filling with columns
     for j in range (w):
-        for i in range (h-nh-1450):
+        for i in range (h-nh-limit):
             if i not in lh:
                 i0 = int(i / dh) * int(dh)
-                i1 = min(i0 + int(dh), (h - 1450) - 1)
+                i1 = min(i0 + int(dh), (h - limit) - 1)
 
                 start = img_rebuilt[i0, j].astype(np.float32)
                 end   = img_rebuilt[i1, j].astype(np.float32)
@@ -158,17 +158,17 @@ def display_diff(r_diff, g_diff, b_diff):
     plt.show()
 
 
-def color_calibration(baseline_path, image_path, nw=20):
+def color_calibration(baseline_path, image_path, nw=20, limit=1450):
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Image introuvable : {image_path}")
     
     h, w = img.shape[:2]
-    nh=int((h-1450)*nw/w)
+    nh=int((h-limit)*nw/w)
 
     #baseline
-    #r, g, b = extract_color_values(baseline_path, nw)
-    r, g, b = extract_color_values_patches(baseline_path, nw)
+    #r, g, b = extract_color_values(baseline_path, nw, limit)
+    r, g, b = extract_color_values_patches(baseline_path, nw, limit)
 
     r_m, g_m, b_m = average_color_values(r, g, b)
 
@@ -178,8 +178,8 @@ def color_calibration(baseline_path, image_path, nw=20):
     #display_diff(r_diff, g_diff, b_diff)
 
     #image correction
-    #r1, g1, b1 = extract_color_values(image_path, nw)
-    r1, g1, b1 = extract_color_values_patches(image_path, nw)
+    #r1, g1, b1 = extract_color_values(image_path, nw, limit)
+    r1, g1, b1 = extract_color_values_patches(image_path, nw, limit)
 
     r1 = np.array(r1)
     g1 = np.array(g1)
@@ -201,25 +201,73 @@ def color_calibration(baseline_path, image_path, nw=20):
         for j in range(nw):
             image_calib[i, j] = [b1_new[i][j], g1_new[i][j], r1_new[i][j]]
     
-    img_rebuilt = cv2.resize(image_calib, (w, h-1450), interpolation=cv2.INTER_LINEAR)
+    img_rebuilt = cv2.resize(image_calib, (w, h-limit), interpolation=cv2.INTER_LINEAR)
     #img_rebuilt = rebuild_image(image_path, image_calib, nw)
 
-    # cv2.imshow("calibrated image", img_rebuilt)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    # cv2.imwrite("calibrated image.png", img_rebuilt)
+    cv2.imshow("calibrated image", img_rebuilt)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.imwrite("calibrated image.png", img_rebuilt)
 
 
 
-#color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC34806.jpg", 500)
+#color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 500, 1450)
 
 
+def plot_lines(baseline_path, image_path, nw=20, limit=1450):
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
+    
+    h, w = img.shape[:2]
+    nh=int((h-limit)*nw/w)
+
+    #baseline
+    r, g, b = extract_color_values_patches(baseline_path, nw, limit)
+    
+    #average values of the uniform part of the baseline
+    r2, g2, b2 = extract_color_values_patches(baseline_path, nw, 1450)
+    r_ = np.array(r2)
+    g_ = np.array(g2)
+    b_ = np.array(b2)
+    r_m = np.mean(r_)
+    g_m = np.mean(g_)
+    b_m = np.mean(b_)
+
+    r_diff, g_diff, b_diff = diff_to_mean_multiply(r, g, b, r_m, g_m, b_m)
 
 
+    #image correction
+    r1, g1, b1 = extract_color_values_patches(image_path, nw, limit)
 
+    r1 = np.array(r1)
+    g1 = np.array(g1)
+    b1 = np.array(b1)
 
+    #r1_new, g1_new, b1_new = r1-r_diff, g1-g_diff, b1-b_diff
+    r1_new, g1_new, b1_new = r1/r_diff, g1/g_diff, b1/b_diff
 
+    r1_new = np.nan_to_num(r1_new, nan=0, posinf=255, neginf=0)
+    g1_new = np.nan_to_num(g1_new, nan=0, posinf=255, neginf=0)
+    b1_new = np.nan_to_num(b1_new, nan=0, posinf=255, neginf=0)
+    r1_new = np.clip(r1_new, 0, 255)
+    g1_new = np.clip(g1_new, 0, 255)
+    b1_new = np.clip(b1_new, 0, 255)
 
+    
+    image_calib = np.zeros((nh, nw, 3), dtype=np.uint8)
+    for i in range (nh):
+        for j in range(nw):
+            image_calib[i, j] = [b1_new[i][j], g1_new[i][j], r1_new[i][j]]
+    
+    img_rebuilt = cv2.resize(image_calib, (w, h-limit), interpolation=cv2.INTER_LINEAR)
+
+    cv2.imshow("calibrated image", img_rebuilt)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.imwrite("calibrated image.png", img_rebuilt)
+
+plot_lines("./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 1500, 1050)
 
 
 
