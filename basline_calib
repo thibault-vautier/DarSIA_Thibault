@@ -280,12 +280,6 @@ def plot_lines(baseline_path, image_path, nw=20, limit=1450):
         plt.show()
 
 
-#color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 1000, 1450)
-
-#plot_lines("./results/cropping/DSC22892.jpg", "./results/cropping/DSC23183.jpg", 1500, 1050)
-
-
-
 def optimization(baseline_path1, baseline_path2, nw=20, limit=1450, a=0.5):
     #baseline1
     r1, g1, b1 = extract_color_values_patches(baseline_path1, nw, limit)
@@ -334,14 +328,74 @@ def optimization(baseline_path1, baseline_path2, nw=20, limit=1450, a=0.5):
     return (r_m11-r_m1)**2 + (g_m11-g_m1)**2 + (b_m11-b_m1)**2 + (r_m22-r_m2)**2 + (g_m22-g_m2)**2 + (b_m22-b_m2)**2
 
 
-a=[0,5]
+def color_calibration_opti(baseline_path1, baseline_path2, image_path, nw=20, limit=1450):
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Image introuvable : {image_path}")
+    
+    h, w = img.shape[:2]
+    nh=int((h-limit)*nw/w)
 
-#optimization("./results/cropping/DSC22892.jpg", "./results/cropping/DSC00420.jpg", 1000, 1450, a)
+    #baseline1
+    r1, g1, b1 = extract_color_values_patches(baseline_path1, nw, limit)
+    r_m1, g_m1, b_m1 = average_color_values(r1, g1, b1)
+    r_diff1, g_diff1, b_diff1 = diff_to_mean_multiply(r1, g1, b1, r_m1, g_m1, b_m1)
 
-result = minimize(lambda a: optimization("./results/cropping/DSC22892.jpg", "./results/cropping/DSC00420.jpg", 1000, 1450, a), x0=a, bounds=[(0, 1)])
+    #baseline2
+    r2, g2, b2 = extract_color_values_patches(baseline_path2, nw, limit)
+    r_m2, g_m2, b_m2 = average_color_values(r2, g2, b2)
+    r_diff2, g_diff2, b_diff2 = diff_to_mean_multiply(r2, g2, b2, r_m2, g_m2, b_m2)
 
-print("Optimal a:", result.x[0])
-print("Minimum value:", result.fun)
+    a = 0.5
+
+    result = minimize(lambda a: optimization(baseline_path1, baseline_path2, 1000, 1450, a), x0=a, bounds=[(0, 1)])
+
+    a = result.x[0]
+    print(a)
+
+    r_diff = a*r_diff1 + (1-a)*r_diff2
+    g_diff = a*g_diff1 + (1-a)*g_diff2  
+    b_diff = a*b_diff1 + (1-a)*b_diff2
+
+
+    #image correction
+    r1, g1, b1 = extract_color_values_patches(image_path, nw, limit)
+
+    r1 = np.array(r1)
+    g1 = np.array(g1)
+    b1 = np.array(b1)
+
+    r1_new, g1_new, b1_new = r1/r_diff, g1/g_diff, b1/b_diff
+
+    r1_new = np.nan_to_num(r1_new, nan=0, posinf=255, neginf=0)
+    g1_new = np.nan_to_num(g1_new, nan=0, posinf=255, neginf=0)
+    b1_new = np.nan_to_num(b1_new, nan=0, posinf=255, neginf=0)
+    r1_new = np.clip(r1_new, 0, 255)
+    g1_new = np.clip(g1_new, 0, 255)
+    b1_new = np.clip(b1_new, 0, 255)
+
+    
+    image_calib = np.zeros((nh, nw, 3), dtype=np.uint8)
+    for i in range (nh):
+        for j in range(nw):
+            image_calib[i, j] = [b1_new[i][j], g1_new[i][j], r1_new[i][j]]
+    
+    img_rebuilt = cv2.resize(image_calib, (w, h-limit), interpolation=cv2.INTER_LINEAR)
+
+    cv2.imshow("calibrated image", img_rebuilt)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.imwrite("calibrated image.png", img_rebuilt)
+
+
+#color_calibration("./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 1000, 1450)
+
+#plot_lines("./results/cropping/DSC22892.jpg", "./results/cropping/DSC23183.jpg", 1500, 1050)
+
+
+color_calibration_opti("./results/cropping/DSC00420.jpg", "./results/cropping/DSC22892.jpg", "./results/cropping/DSC26646.jpg", 1000, limit=1450)
+
+
 
 
 
